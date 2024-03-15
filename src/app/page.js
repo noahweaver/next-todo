@@ -1,95 +1,79 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+    const apiURL = "http://localhost:5294/"
+    const [todos, setTodos] = useState([]);
+    const [newTodo, setNewTodo] = useState("");
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+    useEffect(() => {
+        fetchTodos();
+    }, []);
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+    const fetchTodos = () => {
+        fetch(`${apiURL}api/todo/GetNotes`)
+            .then((response) => response.json())
+            .then((data) => { console.log("data", data); setTodos(data); })
+            .catch((error) => console.log(error))
+    }
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
+    const handleChange = (event) => {
+        setNewTodo(event.target.value);
+    }
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    const addTodo = () => {
+        console.log("Add todo");
+        const data = new FormData();
+        data.append("newNote", newTodo);
+
+        fetch(`${apiURL}api/todo/AddNote`, {
+            method: "POST",
+            body: data
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log("add todo result", result);
+                alert(result);
+                setNewTodo("");
+                fetchTodos();
+            })
+            .catch((error) => console.log(error))
+    }
+
+    const handleDelete = (id) => {
+        console.log("Delete todo");
+
+        fetch(`${apiURL}api/todo/DeleteNote?id=${id}`, {
+            method: "DELETE",
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log("delete todo result", result);
+                alert(result);
+                fetchTodos();
+            })
+            .catch((error) => console.log(error))
+    }
+
+    return (
+        <main className={styles.main}>
+            <h1 className={styles.title}>Welcome to Todo App</h1>
+            <div>
+
+                <input value={newTodo} onChange={handleChange} onKeyDown={(e) => e.key === "Enter" && addTodo()}/>
+                <button onClick={() => addTodo()} >Add</button>
+            </div>
+            <div>
+
+                <h2>Todo List</h2>
+                <ul className={styles.listParent}>
+                    {todos && todos.length > 0 && todos.map((todo) => (
+                        <li className={styles.listItem} key={todo.id}>{todo.description} <button onClick={() => handleDelete(todo.id)}>Delete</button> </li>
+                    ))}
+                </ul>
+            </div>
+        </main>
+    );
 }
